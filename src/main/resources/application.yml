@@ -1,0 +1,66 @@
+server:
+  port: 8777
+spring:
+  application:
+    name: ShopStore
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/shopstore?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+  #data:
+  #  redis:
+  #    host:
+  #    port: 6379
+  #    password: 123456
+  #    lettuce:
+  #      pool:
+  #        max-active: 10
+  #        max-idle: 10
+  #        min-idle: 1
+  #        time-between-eviction-runs: 10s
+  jackson:
+    default-property-inclusion: non_null # JSON处理时忽略非空字段
+
+mybatis-plus:
+  type-aliases-package: com.zxyy.pojo.entity # 别名扫描包
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      update-strategy: not_null
+logging:
+  level:
+    com.hmdp: debug
+
+shop:
+  jwt:
+    # 设置jwt签名加密时使用的秘钥
+    admin-secret-key: Wmhhb1poaVl1RGVZdW5QYW5YaWFuZ011VG9rZW4=
+    # 设置jwt过期时间
+    admin-ttl: 7200000
+    # 设置前端传递过来的令牌名称
+    admin-token-name: authentication
+
+
+# knife4j配置
+knife4j:
+  enable: true
+# springdoc-openapi项目配置
+springdoc:
+  # 禁用扫描@ControllerAdvice的泛型响应，避免Spring Framework 6.2.x的ControllerAdviceBean构造器不兼容
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: com.zxyy.controller
