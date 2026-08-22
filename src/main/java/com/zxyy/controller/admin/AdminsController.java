@@ -7,7 +7,7 @@ import com.zxyy.pojo.entity.Admin;
 import com.zxyy.pojo.vo.AdminLoginVo;
 import com.zxyy.properties.JwtProperties;
 import com.zxyy.result.Result;
-import com.zxyy.service.AdminService;
+import com.zxyy.service.impl.AdminService;
 import com.zxyy.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

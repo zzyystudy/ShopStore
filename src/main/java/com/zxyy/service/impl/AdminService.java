@@ -9,18 +9,16 @@ import com.zxyy.exception.PasswordError;
 import com.zxyy.mapper.AdminMapper;
 import com.zxyy.pojo.dto.AdminLoginDTO;
 import com.zxyy.pojo.entity.Admin;
-import com.zxyy.service.AdminService;
 import com.zxyy.util.PasswordUtil;
 import org.springframework.stereotype.Service;
 
 @Service
-public class IAdminService extends ServiceImpl<AdminMapper, Admin> implements AdminService {
+public class AdminService extends ServiceImpl<AdminMapper, Admin> {
     /**
      * 登录接口
      * @param adminLoginDTO
      * @return
      */
-    @Override
     public Admin login(AdminLoginDTO adminLoginDTO) {
         String username = adminLoginDTO.getUsername();
         String plainPassword = adminLoginDTO.getPassword();
