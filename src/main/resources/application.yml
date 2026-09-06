@@ -38,6 +38,11 @@ logging:
     com.hmdp: debug
 
 shop:
+  alioss:
+    access-key-id: ${shop.alioss.access-key-id}
+    endpoint: ${shop.alioss.endpoint}
+    access-key-secret: ${shop.alioss.access-key-secret}
+    bucket-name: ${shop.alioss.bucket-name}
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: Wmhhb1poaVl1RGVZdW5QYW5YaWFuZ011VG9rZW4=

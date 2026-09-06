@@ -37,7 +37,7 @@ public class AdminsController {
      * @return
      */
     @PostMapping("/login")
-    @Operation(description = "管理员登录")
+    @Operation(summary = "管理员登录")
     public Result<AdminLoginVo> login(@RequestBody AdminLoginDTO employeeLoginDTO) {
         log.info("员工登录：{}", employeeLoginDTO);
 

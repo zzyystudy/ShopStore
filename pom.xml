@@ -55,6 +55,12 @@
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>3.5.15</version>
         </dependency>
+        <!--mybatis plus 分页插件-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.15</version>
+        </dependency>
         <!--test-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -90,6 +96,12 @@
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
+        </dependency>
+        <!--ALiOss-->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+            <version>3.10.2</version>
         </dependency>
     </dependencies>
 
