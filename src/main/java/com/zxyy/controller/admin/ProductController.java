@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -29,13 +28,15 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    //查看所有商品 分页查询 根据条件
+    //查看所有商品 分页查询 根据条件  TODO这个所有数据都返回了
     @GetMapping("/page")
     @Operation(summary = "分页查询接口")
     public Result<PageResult> page(ProductPageQueryDTO productPageQueryDTO){
         log.info("分页查询:{}",productPageQueryDTO);
         Page<Product> page = productService.lambdaQuery()
                 .like(StringUtils.hasText(productPageQueryDTO.getName()), Product::getName, productPageQueryDTO.getName())
+                //删除的？
+                .eq(productPageQueryDTO.getIsDeleted() != null,Product::getIsDeleted,productPageQueryDTO.getIsDeleted())
                 //区间查询
                 .ge(productPageQueryDTO.getStartTime() != null, Product::getCreateTime, productPageQueryDTO.getStartTime())
                 .le(productPageQueryDTO.getEndTime() != null, Product::getCreateTime, productPageQueryDTO.getEndTime())
@@ -67,10 +68,7 @@ public class ProductController {
     @Operation(summary = "新增商品接口")
     public Result<String> save(@RequestBody  ProductDTO productDTO){
         log.info("新增商品:{}",productDTO);
-        Product product = BeanUtil.copyProperties(productDTO, Product.class);
-        product.setCreateUser(BaseContext.getCurrentId());
-        product.setUpdateUser(BaseContext.getCurrentId());
-        productService.save(product);
+        productService.saveProduct(productDTO);
         return Result.success();
     }
     //修改商品 编号 图片等等  逻辑删除！
@@ -87,6 +85,12 @@ public class ProductController {
         return Result.success();
     }
     //彻底删除接口
-
+    @DeleteMapping
+    @Operation(summary = "删除商品")
+    public Result<String> delete(String productNo){
+        log.info("删除商品编号:{}",productNo);
+        productService.delete(productNo);
+        return Result.success();
+    }
 
 }

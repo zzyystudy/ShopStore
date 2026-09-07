@@ -1,5 +1,7 @@
 package com.zxyy.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.AllArgsConstructor;
@@ -22,6 +24,7 @@ public class OrderItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     //主键id
+    @TableId(type = IdType.AUTO)
     private Long id;
     //关联的订单id TODO 这里关联的订单id是主键id还是展示id 为什么
     private Long orderId;

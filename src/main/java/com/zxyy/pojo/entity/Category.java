@@ -1,5 +1,7 @@
 package com.zxyy.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +21,7 @@ public class Category implements Serializable {
     //序列化版本
     private static final long serialVersionUID = 1L;
 
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     //分类名称
@@ -26,6 +29,9 @@ public class Category implements Serializable {
 
     //顺序
     private Integer sort;
+
+    //是否逻辑删除
+    private Integer isDeleted;
 
     //分类状态 0标识禁用 1表示启用
     private Integer status;

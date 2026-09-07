@@ -33,9 +33,10 @@ mybatis-plus:
   global-config:
     db-config:
       update-strategy: not_null
+      id-type: auto
 logging:
   level:
-    com.hmdp: debug
+    com.zxyy: debug
 
 shop:
   alioss:

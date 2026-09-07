@@ -1,5 +1,7 @@
 package com.zxyy.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +21,7 @@ public class ShopOrder implements Serializable {
     private static final long serialVersionUID = 1L;
 
     //主键id 不对外
+    @TableId(type = IdType.AUTO)
     private Long id;
     //业务编号 对外展示
     private String orderNo;

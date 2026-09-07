@@ -1,6 +1,9 @@
 package com.zxyy.pojo.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +23,7 @@ public class Product implements Serializable {
     private static final long serialVersionUID = 1L;
 
     //自增主键
+    @TableId(type = IdType.AUTO)
     private Long id;
     //对外展示业务编号
     private String productNo;
@@ -46,9 +50,10 @@ public class Product implements Serializable {
     //状态
     private Integer status;
     //乐观锁版本号
+    @Version
     private Integer version;
     //是否删除字段
-    private Integer is_deleted;
+    private Integer isDeleted;
     //审计字段
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
