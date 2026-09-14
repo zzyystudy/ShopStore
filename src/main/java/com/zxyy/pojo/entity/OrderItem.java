@@ -26,7 +26,7 @@ public class OrderItem implements Serializable {
     //主键id
     @TableId(type = IdType.AUTO)
     private Long id;
-    //关联的订单id TODO 这里关联的订单id是主键id还是展示id 为什么
+    //关联的订单id 外键永远关联主键id
     private Long orderId;
     //单个商品的行号 从一开始
     private Integer lineNo;

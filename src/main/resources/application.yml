@@ -44,6 +44,18 @@ shop:
     endpoint: ${shop.alioss.endpoint}
     access-key-secret: ${shop.alioss.access-key-secret}
     bucket-name: ${shop.alioss.bucket-name}
+  alipay:
+    app-id: ${shop.alipay.app-id}
+    alipay-public-key: ${shop.alipay.alipay-public-key}
+    app-private-key: ${shop.alipay.app-private-key}
+    gateway-url: ${shop.alipay.gateway-url}
+    CHARSET: ${shop.alipay.CHARSET}
+    FORMAT: ${shop.alipay.FORMAT}
+    sign-type: ${shop.alipay.sign-type}
+    notify-url: ${shop.alipay.notify-url}
+    return-url: ${shop.alipay.return-url}
+  aes:
+    key: ${shop.aes.key}
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: Wmhhb1poaVl1RGVZdW5QYW5YaWFuZ011VG9rZW4=

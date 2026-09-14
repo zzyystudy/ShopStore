@@ -42,7 +42,7 @@ public class Product implements Serializable {
     //商品价格
     private BigDecimal price;
     //库存
-    private Long AvailableStock;
+    private Long availableStock;
     //已售
     private Long soldCount;
     //purchase limit 交易限购 0表示不限购

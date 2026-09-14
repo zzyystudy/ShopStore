@@ -1,4 +1,6 @@
 src/main/resources/application-dev.yml
+虚拟商品商城核心表设计.md
+备份
 
 target/
 !.mvn/wrapper/maven-wrapper.jar

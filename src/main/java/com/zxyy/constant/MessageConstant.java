@@ -12,10 +12,12 @@ public class MessageConstant {
 
     //product
     public static final String PRODUCT_LOGIC_ALIVE = "商品尚未逻辑删除";
+    public static final String PRODUCT_NOT_EXIT = "商品不存在";
 
     //category
     public static final String CATEGORY_NOT_EXIT = "分类不存在";
     public static final String CATEGORY_LOGIC_ALIVE = "分类尚未逻辑删除";
 
-
+    //virtualGoodItem
+    public static final String ITEM_RECUR = "库存重复";
 }

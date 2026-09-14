@@ -25,6 +25,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns(
                         "/admin/admins/login",
+                        "/guest/**",
                         // 放行 Knife4j / Swagger UI
                         "/doc.html",
                         "/swagger-ui/**",
