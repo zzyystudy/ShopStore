@@ -47,7 +47,7 @@ public class VirtualGoodsItemController {
     public Result<String> setInvalidStock(@RequestBody InvalidStockDTO invalidStockDTO){
         log.info("禁用库存:{}",invalidStockDTO);
         VirtualGoodItem virtualGoodItem = BeanUtil.copyProperties(invalidStockDTO, VirtualGoodItem.class);
-        virtualGoodItemService.updateByInventoryNo(virtualGoodItem);
+        virtualGoodItemService.setInvalidStock(virtualGoodItem);
         return Result.success();
     }
 

@@ -93,6 +93,7 @@ public class VirtualGoodItemService extends ServiceImpl<VirtualGoodItemMapper, V
         update(virtualGoodItem,wrapper);
     }
 
+    @Transactional
     public void setInvalidStocks(InvalidStocksDTO invalidStocksDTO) {
         //没有选择的情况前端处理
         LambdaUpdateWrapper<VirtualGoodItem> wrapper = new LambdaUpdateWrapper<VirtualGoodItem>()
@@ -100,6 +101,14 @@ public class VirtualGoodItemService extends ServiceImpl<VirtualGoodItemMapper, V
                 .set(VirtualGoodItem::getStatus, invalidStocksDTO.getStatus())
                 .set(VirtualGoodItem::getInvalidReason, invalidStocksDTO.getInvalidReason());
         update(wrapper);
+        //扣减库存
+        VirtualGoodItem virtualGoodItem = query()
+                .eq("inventory_no", invalidStocksDTO.getProductNos().get(0))
+                .one();
+        Product product = productMapper.selectById(virtualGoodItem.getProductId());
+        product.setAvailableStock(product.getAvailableStock()-invalidStocksDTO.getProductNos().size());
+        //乐观锁
+        productMapper.updateById(product);
     }
 
     public PageResult pageQuery(VirtualGoodItemPageQueryDTO virtualGoodItemPageQueryDTO) {
@@ -119,11 +128,25 @@ public class VirtualGoodItemService extends ServiceImpl<VirtualGoodItemMapper, V
         }
         Page<VirtualGoodItem> page = lambdaQuery()
                 .eq(product.getId() != null, VirtualGoodItem::getProductId, product.getId())
+                .eq(virtualGoodItemPageQueryDTO.getStatus() != null,VirtualGoodItem::getStatus,virtualGoodItemPageQueryDTO.getStatus())
                 .page(new Page<>(virtualGoodItemPageQueryDTO.getPage(), virtualGoodItemPageQueryDTO.getPageSize()));
         PageResult pageResult = new PageResult();
         pageResult.setTotal(page.getTotal());
         pageResult.setRecords(page.getRecords());
         //TODO 这里也是将所有的信息返回了
         return pageResult;
+    }
+
+    //禁用虚拟商品 扣减库存 乐观锁
+    @Transactional
+    public void setInvalidStock(VirtualGoodItem virtualGoodItem) {
+        //先禁用商品 再扣减库存 TODO 扣减库存
+        updateByInventoryNo(virtualGoodItem);
+        //先查然后直接扣减库存 这里使用不连表查询
+        VirtualGoodItem virtualGoodItem1 = query().eq("inventory_no", virtualGoodItem.getInventoryNo()).one();
+        Product product = productMapper.selectById(virtualGoodItem1.getProductId());
+        product.setAvailableStock(product.getAvailableStock()-1);
+        //乐观锁
+        productMapper.updateById(product);
     }
 }
