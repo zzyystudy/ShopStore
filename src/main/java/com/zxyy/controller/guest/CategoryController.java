@@ -27,7 +27,8 @@ public class CategoryController {
     @Operation(summary = "获取分类列表")
     public Result<List<CategoryVO>> getCategoryList(){
         log.info("获取分类列表");
-        List<Category> categories = categoryService.query().eq("is_deleted",1).list();
+        List<Category> categories = categoryService.query().eq("is_deleted",0)
+                .eq("status",1).list();
         List<CategoryVO> categoryVOs = categories.stream().map(
                 category -> {
                     CategoryVO categoryVO = new CategoryVO();
