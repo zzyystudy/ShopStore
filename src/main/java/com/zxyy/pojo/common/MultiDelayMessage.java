@@ -3,6 +3,7 @@ package com.zxyy.pojo.common;
 import cn.hutool.core.collection.CollUtil;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -12,10 +13,14 @@ public class MultiDelayMessage<T> {
     //记录延时消息的集合
     private List<Long> delayMillis;
 
+    public MultiDelayMessage() {
+    }
+
     //使用默认延时时间
     public MultiDelayMessage(T data){
         this.data = data;
-        this.delayMillis = List.of(
+        //list.of返回的是不可变集合 所以需要使用new arrawlist包装一下
+        this.delayMillis = new ArrayList<>(List.of(
                 10_000L,        // 10s
                 20_000L,        // 20s
                 30_000L,        // 30s
@@ -24,7 +29,7 @@ public class MultiDelayMessage<T> {
                 3 * 60_000L,    // 3min
                 4 * 60_000L,    // 4min
                 4 * 60_000L     // 4min
-        );
+        ));
     }
 
     public MultiDelayMessage(T data,List<Long> delayMillis){

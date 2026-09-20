@@ -22,6 +22,8 @@ public class ProductVO {
     private String image;
     //商品价格
     private BigDecimal price;
+    //可用库存
+    private Integer availableStock;
     //购买限制
     private Integer purchaseLimit;
 }

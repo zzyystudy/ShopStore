@@ -27,6 +27,8 @@ public class ShopOrder implements Serializable {
     private String orderNo;
     //客户端下单幂等号 防止重复下单
     private String clientRequestNo;
+    //请求指纹
+    private String requestFingerprint;
     //Aes-Gcm加密之后Base64后的预留邮箱
     private String buyerEmailCiphertext;
     //邮箱加密使用的随机nonce的base64
@@ -54,7 +56,7 @@ public class ShopOrder implements Serializable {
     //累计退款金额
     private BigDecimal refundAmount;
     //订单购买总件数
-    private Long itemQuantity;
+    private Integer itemQuantity;
     //买家备注
     private String buyerRemark;
     //订单关闭取消原因

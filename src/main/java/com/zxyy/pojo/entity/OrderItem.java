@@ -51,7 +51,7 @@ public class OrderItem implements Serializable {
     //明细应付金额
     private BigDecimal payableAmount;
     //明细发货状态
-    private Integer fulfillStatus;
+    private Integer fulfillmentStatus;
     //已经成功交付的数量
     private Integer deliveredQuantity;
     //已经退款的数量

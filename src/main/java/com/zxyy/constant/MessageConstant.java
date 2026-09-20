@@ -13,6 +13,7 @@ public class MessageConstant {
     //product
     public static final String PRODUCT_LOGIC_ALIVE = "商品尚未逻辑删除";
     public static final String PRODUCT_NOT_EXIT = "商品不存在";
+    public static final String PRODUCT_NOT_SOLD = "商品未启售";
 
     //category
     public static final String CATEGORY_NOT_EXIT = "分类不存在";
@@ -20,4 +21,9 @@ public class MessageConstant {
 
     //virtualGoodItem
     public static final String ITEM_RECUR = "库存重复";
+
+    //order
+    public static final String IDEMPOTENCY_CHECK_FAILED = "幂等校验失败";
+    public static final String ORDER_OUTOFTIME = "订单超时未支付";
+    public static final String OUT_OF_STOCK = "库存不足";
 }
