@@ -1,6 +1,7 @@
 package com.zxyy.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alipay.api.AlipayApiException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -20,10 +21,7 @@ import com.zxyy.pojo.entity.Product;
 import com.zxyy.pojo.entity.ShopOrder;
 import com.zxyy.pojo.entity.VirtualGoodItem;
 import com.zxyy.pojo.vo.OrderSubmitVO;
-import com.zxyy.util.AESGCMUtil;
-import com.zxyy.util.HmacSha256Util;
-import com.zxyy.util.PasswordUtil;
-import com.zxyy.util.ULIDUtil;
+import com.zxyy.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
@@ -55,6 +53,8 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
     private OrderItemMapper orderItemMapper;
     @Autowired
     private RabbitTemplate rabbitTemplate;
+    @Autowired
+    private PayUtil payUtil;
     /**
      * 创建订单
      *
@@ -186,7 +186,7 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
         }catch (Exception e2){
             log.error("延时消息发送异常",e2);
         }
-        return BeanUtil.copyProperties(shopOrder,OrderSubmitVO.class);
+        return BeanUtil.copyProperties(newShopOrder,OrderSubmitVO.class);
     }
 
     /**
@@ -194,8 +194,16 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
      * @param orderNo
      * @return
      */
-    public String pay(String orderNo) {
-        return null;
+    public String pay(String orderNo) throws AlipayApiException {
+        //查询金额 发送请求
+        ShopOrder shopOrder = lambdaQuery()
+                .eq(ShopOrder::getOrderNo, orderNo)
+                .one();
+        //判断订单状态 待支付才可以进行支付 TODO springSecurity 统一处理？？
+        if(shopOrder.getOrderStatus() != 10){
+            throw new OrderException("订单正在处理");
+        }
+        return payUtil.sendRequestToAlipay(orderNo, shopOrder.getPayableAmount(), "用户支付");
     }
 
     /**
@@ -216,5 +224,12 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
         virtualGoodItemMapper.update(new LambdaUpdateWrapper<VirtualGoodItem>()
                 .in(VirtualGoodItem::getOrderItemId,orderItemIds)
                 .set(VirtualGoodItem::getStatus,0));
+
+        //product增加可用库存
+        for(OrderItem orderItem :orderItemList){
+            Product product = productMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getId, orderItem.getProductId()));
+            product.setAvailableStock(product.getAvailableStock() + orderItem.getQuantity());
+            productMapper.updateById(product);
+        }
     }
 }

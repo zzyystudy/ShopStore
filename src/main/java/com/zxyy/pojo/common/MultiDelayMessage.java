@@ -19,7 +19,7 @@ public class MultiDelayMessage<T> {
     //使用默认延时时间
     public MultiDelayMessage(T data){
         this.data = data;
-        //list.of返回的是不可变集合 所以需要使用new arrawlist包装一下
+        //list.of返回的是不可变集合 所以需要使用new arraylist包装一下
         this.delayMillis = new ArrayList<>(List.of(
                 10_000L,        // 10s
                 20_000L,        // 20s

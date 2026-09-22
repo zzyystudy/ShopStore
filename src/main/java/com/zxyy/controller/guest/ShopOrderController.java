@@ -1,5 +1,6 @@
 package com.zxyy.controller.guest;
 
+import com.alipay.api.AlipayApiException;
 import com.zxyy.pojo.dto.OrderSubmitDTO;
 import com.zxyy.pojo.vo.OrderSubmitVO;
 import com.zxyy.result.Result;
@@ -20,7 +21,7 @@ public class ShopOrderController {
 
     @GetMapping
     @Operation(summary = "用户付款接口")
-    public Result<String> alipay(String orderNo){
+    public Result<String> alipay(String orderNo) throws AlipayApiException {
         log.info("支付订单:{}",orderNo);
         String content = shopOrderService.pay(orderNo);
         return Result.success(content);

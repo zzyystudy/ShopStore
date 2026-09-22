@@ -1,5 +1,6 @@
 package com.zxyy.handler;
 
+import com.alipay.api.AlipayApiException;
 import com.zxyy.constant.MessageConstant;
 import com.zxyy.exception.BaseException;
 import com.zxyy.result.Result;
@@ -41,6 +42,17 @@ public class GlobalExceptionHandler {
         else {
             return Result.error(MessageConstant.UNKNOWN_ERROR);
         }
+    }
+
+    /**
+     * 处理支付异常
+     * @param ex
+     * @return
+     */
+    @ExceptionHandler
+    public Result exceptionHandler(AlipayApiException ex){
+        log.info("支付异常{}",ex.getMessage());
+        return Result.error("调用支付宝支付服务异常");
     }
 
 }
