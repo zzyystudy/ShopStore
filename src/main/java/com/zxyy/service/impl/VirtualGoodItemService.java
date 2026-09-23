@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zxyy.constant.MessageConstant;
+import com.zxyy.exception.BizException;
 import com.zxyy.exception.ProductNotExit;
 import com.zxyy.exception.VirtualGoodItemRecur;
 import com.zxyy.mapper.ProductMapper;
@@ -80,11 +81,8 @@ public class VirtualGoodItemService extends ServiceImpl<VirtualGoodItemMapper, V
         }
         //不为空添加到数据库中
         saveBatch(virtualGoodItems);
-        //然后同步增加商品库存 必须使用乐观锁
-        Product product = productMapper.selectById(productId);
-        product.setAvailableStock(product.getAvailableStock() + virtualGoodItems.size());
-        //这里注册的拦截器 自动完整成乐观锁校验
-        productMapper.updateById(product);
+        //增加库存这里不需要cas
+        productMapper.addStock(productId,virtualGoodItems.size());
     }
 
     //根据商品编号修改商品信息
@@ -105,10 +103,11 @@ public class VirtualGoodItemService extends ServiceImpl<VirtualGoodItemMapper, V
         VirtualGoodItem virtualGoodItem = query()
                 .eq("inventory_no", invalidStocksDTO.getProductNos().get(0))
                 .one();
-        Product product = productMapper.selectById(virtualGoodItem.getProductId());
-        product.setAvailableStock(product.getAvailableStock()-invalidStocksDTO.getProductNos().size());
-        //乐观锁
-        productMapper.updateById(product);
+        int rows = productMapper.deductStock(virtualGoodItem.getProductId(),invalidStocksDTO.getProductNos().size());
+        if(rows == 0){
+            //如果更新失败 并发问题直接抛出异常
+            throw new BizException(MessageConstant.OUT_OF_STOCK);
+        }
     }
 
     public PageResult pageQuery(VirtualGoodItemPageQueryDTO virtualGoodItemPageQueryDTO) {
@@ -144,9 +143,10 @@ public class VirtualGoodItemService extends ServiceImpl<VirtualGoodItemMapper, V
         updateByInventoryNo(virtualGoodItem);
         //先查然后直接扣减库存 这里使用不连表查询
         VirtualGoodItem virtualGoodItem1 = query().eq("inventory_no", virtualGoodItem.getInventoryNo()).one();
-        Product product = productMapper.selectById(virtualGoodItem1.getProductId());
-        product.setAvailableStock(product.getAvailableStock()-1);
-        //乐观锁
-        productMapper.updateById(product);
+        int rows = productMapper.deductStock(virtualGoodItem1.getProductId(),1);
+        if(rows == 0){
+            //如果更新失败 并发问题直接抛出异常
+            throw new BizException(MessageConstant.OUT_OF_STOCK);
+        }
     }
 }

@@ -21,8 +21,8 @@ public class MybatisPlusConfig {
         //添加乐观锁 拦截器  乐观锁拦截器会在更新的时候会查看version字段是否为空 为空就不加乐观锁
         //不为空就加乐观锁  需要为乐观锁字段加上 @Version字段
         //库存的扣减需要乐观锁
-        //更改商品信息 一般加悲观锁。
-        interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
+        //更改商品信息 一般加悲观锁。  不能使用version字段作为乐观锁字段 会让两个互不相干的也不起冲突！！！！
+        //interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
         //添加分页拦截器
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL)); // 如果配置多个插件, 切记分页最后添加
 

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zxyy.constant.MessageConstant;
 import com.zxyy.constant.RabbitMqConstant;
+import com.zxyy.exception.BizException;
 import com.zxyy.exception.OrderException;
 import com.zxyy.mapper.OrderItemMapper;
 import com.zxyy.mapper.ProductMapper;
@@ -21,11 +22,10 @@ import com.zxyy.pojo.entity.Product;
 import com.zxyy.pojo.entity.ShopOrder;
 import com.zxyy.pojo.entity.VirtualGoodItem;
 import com.zxyy.pojo.vo.OrderSubmitVO;
+import com.zxyy.pojo.vo.ShopVirtualGoodVO;
+import com.zxyy.pojo.vo.VirtualGoodsVO;
 import com.zxyy.util.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,10 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,6 +49,8 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
     private VirtualGoodItemMapper virtualGoodItemMapper;
     @Autowired
     private OrderItemMapper orderItemMapper;
+    @Autowired
+    private ShopOrderMapper shopOrderMapper;
     @Autowired
     private RabbitTemplate rabbitTemplate;
     @Autowired
@@ -171,10 +171,10 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
         }
         //原子减少商品库存 不增加soldCount
         for(BuyProductDTO buyProductDTO : items){
-            Product product = collect.get(buyProductDTO.getProductNo());
-            product.setAvailableStock(product.getAvailableStock()-buyProductDTO.getQuantity());
-            //原子性扣减库存 乐观锁
-            productMapper.updateById(product);
+            int rows = productMapper.deductStockByNo(buyProductDTO.getProductNo(),buyProductDTO.getQuantity());
+            if(rows == 0){
+                throw new BizException(MessageConstant.OUT_OF_STOCK);
+            }
         }
         //发送mq消息 TODO 消息事务 outbox
 
@@ -203,6 +203,7 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
         if(shopOrder.getOrderStatus() != 10){
             throw new OrderException("订单正在处理");
         }
+        //回调时post的参数 就是orderNo 我们传入的第一个值
         return payUtil.sendRequestToAlipay(orderNo, shopOrder.getPayableAmount(), "用户支付");
     }
 
@@ -212,24 +213,110 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
      */
     @Transactional
     public void restoreStock(Long orderId) {
-        lambdaUpdate()
-                .set(ShopOrder::getOrderStatus,40)
-                .set(ShopOrder::getClosedTime, LocalDateTime.now())
-                .set(ShopOrder::getCloseReason, MessageConstant.ORDER_OUTOFTIME)
-                .eq(ShopOrder::getId,orderId)
-                .update();
-
+        int rows = shopOrderMapper.closeById(orderId);
+        if(rows == 0){
+            //没有修改成功说明已经支付成功了 直接返回
+            return;
+        }
+        //下面这些可以直接修改 统一订单这里校验
         List<OrderItem> orderItemList = orderItemMapper.selectList(new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, orderId));
         List<Long> orderItemIds= orderItemList.stream().map(OrderItem::getId).toList();
         virtualGoodItemMapper.update(new LambdaUpdateWrapper<VirtualGoodItem>()
                 .in(VirtualGoodItem::getOrderItemId,orderItemIds)
                 .set(VirtualGoodItem::getStatus,0));
-
         //product增加可用库存
         for(OrderItem orderItem :orderItemList){
-            Product product = productMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getId, orderItem.getProductId()));
-            product.setAvailableStock(product.getAvailableStock() + orderItem.getQuantity());
-            productMapper.updateById(product);
+            productMapper.addStock(orderItem.getProductId(),orderItem.getQuantity());
         }
+    }
+
+    @Transactional
+    public void paySuccess(String orderNo) {
+        //支付成功修改订单 库存状态 修改product已经售出的库存
+        //1.先修改这个订单的状态 成功再往下走
+        int rows = shopOrderMapper.markPaid(orderNo);
+        if(rows == 0){
+            //如果支付成功后 这个超时订单刚好关闭了
+            //TODO 退款 ???
+
+            return;
+        }
+        //2.修改库存状态
+/*        ShopOrder shopOrder = lambdaQuery().eq(ShopOrder::getOrderNo, orderNo).one();
+        LambdaQueryWrapper<OrderItem> wrapper = new LambdaQueryWrapper<OrderItem>()
+                .eq(OrderItem::getOrderId,shopOrder.getId());
+        List<OrderItem> orderItemList = orderItemMapper.selectList(wrapper);
+        List<Long> list = orderItemList.stream().map(OrderItem::getId).toList();
+        LambdaQueryWrapper<VirtualGoodItem> queryWrapper = new LambdaQueryWrapper<VirtualGoodItem>()
+                .in(VirtualGoodItem::getOrderItemId,list);
+        List<VirtualGoodItem> virtualGoodItems = virtualGoodItemMapper.selectList(queryWrapper);*/
+
+
+        //最后发或消息
+        rabbitTemplate.convertAndSend(RabbitMqConstant.DELIVERY_EXCHANGE,
+                RabbitMqConstant.DELIVERY_ROUTING_KEY,orderNo);
+    }
+
+    /**
+     * 根据订单 编号返回 虚拟商品信息
+     *
+     * @param orderNo 订单编号
+     * @return 虚拟商品信息
+     */
+    public ShopVirtualGoodVO listVirtualItemByOrderNo(String orderNo) {
+        ShopOrder shopOrder = lambdaQuery().eq(ShopOrder::getOrderNo, orderNo).one();
+        //解密邮箱
+        String email = aesgcmUtil.decrypt(shopOrder.getBuyerEmailCiphertext(), shopOrder.getBuyerEmailNonce());
+        LambdaQueryWrapper<OrderItem> wrapper = new LambdaQueryWrapper<OrderItem>()
+                .eq(OrderItem::getOrderId,shopOrder.getId());
+        List<OrderItem> orderItemList = orderItemMapper.selectList(wrapper);
+        Map<Long, OrderItem> orderItemMap = orderItemList.stream()
+                .collect(Collectors.toMap(
+                        OrderItem::getProductId,            // key
+                        item -> item               // value：整个对象
+                ));
+        List<Long> list = orderItemList.stream().map(OrderItem::getOrderId).toList();
+        LambdaQueryWrapper<VirtualGoodItem> virtualGoodItemLambdaQueryWrapper = new LambdaQueryWrapper<VirtualGoodItem>()
+                .in(VirtualGoodItem::getOrderItemId,list);
+        List<VirtualGoodItem> virtualGoodItems = virtualGoodItemMapper.selectList(virtualGoodItemLambdaQueryWrapper);
+        List<VirtualGoodsVO> virtualGoodsVOList = new ArrayList<>();
+        virtualGoodItems.forEach(virtualGoodItem -> {
+            VirtualGoodsVO virtualGoodsVO = new VirtualGoodsVO();
+            virtualGoodsVO.setProductName(orderItemMap.get(virtualGoodItem.getProductId()).getProductName());
+            String decrypt = aesgcmUtil.decrypt(virtualGoodItem.getContentCiphertext(), virtualGoodItem.getEncryptionNonce());
+            virtualGoodsVO.setContext(decrypt);
+            virtualGoodsVOList.add(virtualGoodsVO);
+        });
+        ShopVirtualGoodVO shopVirtualGoodVO = new ShopVirtualGoodVO();
+        shopVirtualGoodVO.setEmail(email);
+        shopVirtualGoodVO.setShopOrderNo(orderNo);
+        shopVirtualGoodVO.setVirtualGoodsVOList(virtualGoodsVOList);
+        return shopVirtualGoodVO;
+    }
+
+    @Transactional
+    public void completeOrderByNo(String orderNo) {
+        //TODO 感觉有点问题
+        lambdaUpdate().set(ShopOrder::getCompletedTime, LocalDateTime.now())
+                .set(ShopOrder::getFulfillmentStatus,2)
+                .eq(ShopOrder::getOrderNo,orderNo)
+                .update();
+        ShopOrder shopOrder = lambdaQuery().eq(ShopOrder::getOrderNo, orderNo).one();
+        LambdaQueryWrapper<OrderItem> queryWrapper = new LambdaQueryWrapper<OrderItem>()
+                .eq(OrderItem::getOrderId,shopOrder.getId());
+        List<OrderItem> orderItemList = orderItemMapper.selectList(queryWrapper);
+        orderItemList.forEach(orderItem -> {
+            LambdaUpdateWrapper<OrderItem> updateWrapper = new LambdaUpdateWrapper<OrderItem>()
+                    .set(OrderItem::getDeliveredTime,LocalDateTime.now())
+                    .set(OrderItem::getDeliveredQuantity,orderItem.getQuantity())
+                    .eq(OrderItem::getId,orderItem.getId());
+            orderItemMapper.update(updateWrapper);
+        });
+        List<Long> list = orderItemList.stream().map(OrderItem::getId).toList();
+        LambdaUpdateWrapper<VirtualGoodItem> updateWrapper = new LambdaUpdateWrapper<VirtualGoodItem>()
+                .set(VirtualGoodItem::getDeliveredTime,LocalDateTime.now())
+                .set(VirtualGoodItem::getStatus,2)
+                .in(VirtualGoodItem::getOrderItemId,list);
+        virtualGoodItemMapper.update(updateWrapper);
     }
 }
