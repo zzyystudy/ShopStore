@@ -283,7 +283,7 @@ public class ShopOrderService extends ServiceImpl<ShopOrderMapper, ShopOrder> {
         virtualGoodItems.forEach(virtualGoodItem -> {
             VirtualGoodsVO virtualGoodsVO = new VirtualGoodsVO();
             virtualGoodsVO.setProductName(orderItemMap.get(virtualGoodItem.getProductId()).getProductName());
-            String decrypt = aesgcmUtil.decrypt(virtualGoodItem.getContentCiphertext(), virtualGoodItem.getEncryptionNonce());
+            String decrypt = aesgcmUtil.decrypt(virtualGoodItem.getContentCiphertext(), virtualGoodItem.getEncryptionNonce(),virtualGoodItem.getInventoryNo());
             virtualGoodsVO.setContext(decrypt);
             virtualGoodsVOList.add(virtualGoodsVO);
         });

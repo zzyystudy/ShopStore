@@ -38,7 +38,7 @@ public class DeliveryItemListener {
     private Configuration freemarkerConfig;
 
     private final String subject = "雨云商城";
-    private final String from = "zhaozhiyu6@163.com";
+    private final String from = "zhaozhiyu6@126.com";
 
 
     /**
@@ -47,8 +47,8 @@ public class DeliveryItemListener {
      */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue(value = RabbitMqConstant.DELIVERY_ORDER_QUEUE,durable = "true"),
-            exchange = @Exchange(value = RabbitMqConstant.DELIVERY_EXCHANGE,delayed = "true",type = ExchangeTypes.TOPIC),
-            key = RabbitMqConstant.DELAY_ORDER_ROUTING_KEY
+            exchange = @Exchange(value = RabbitMqConstant.DELIVERY_EXCHANGE,type = ExchangeTypes.TOPIC),
+            key = RabbitMqConstant.DELIVERY_ROUTING_KEY
     ))
     public void listenDeliveryMessage(String orderNo){
         //邮箱发货 发货成功修改库存状态

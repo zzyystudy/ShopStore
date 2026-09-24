@@ -47,7 +47,6 @@ public class VirtualGoodItem implements Serializable {
     //商品作废原因 TODO 这个和使用了没有关系 后续再考虑这个
     private String invalidReason;
     //乐观锁版本号
-    @Version
     private Integer version;
     //审计字段
     private LocalDateTime createTime;

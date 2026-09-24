@@ -50,7 +50,6 @@ public class Product implements Serializable {
     //状态
     private Integer status;
     //乐观锁版本号
-    @Version
     private Integer version;
     //是否删除字段
     private Integer isDeleted;

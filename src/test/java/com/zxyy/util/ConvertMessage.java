@@ -16,8 +16,8 @@ public class ConvertMessage {
 
     @Test
     void convertMessage(){
-        String a = "hello";
-        rabbitTemplate.convertAndSend(RabbitMqConstant.DELAY_EXCHANGE,
-                RabbitMqConstant.DELAY_ORDER_ROUTING_KEY, a);
+        String orderNo = "01M38JRRQP939XYATSF5MM6Z77";
+        rabbitTemplate.convertAndSend(RabbitMqConstant.DELIVERY_EXCHANGE,
+                RabbitMqConstant.DELIVERY_ROUTING_KEY,orderNo);
     }
 }
